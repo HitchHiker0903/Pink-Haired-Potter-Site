@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin - Allison Walker Ceramics</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <header>
+    <div class="logo">Admin Panel</div>
+    <nav>
+      <a href="/">View Site</a>
+    </nav>
+  </header>
+  <div class="container">
+    <h1>Private Admin</h1>
+    <p>Protected by Cloudflare Access. Manage shop items, gallery, and text here. Works on mobile.</p>
+
+    <div class="admin-section">
+      <h2>Add / Edit Shop Item</h2>
+      <form id="item-form" class="admin-form">
+        <input type="hidden" name="id">
+        <input name="title" placeholder="Title" required>
+        <textarea name="description" placeholder="Description" rows="3"></textarea>
+        <input name="price" type="number" step="0.01" placeholder="Price $" required>
+        <input name="weight_oz" type="number" step="0.1" placeholder="Weight oz" value="16">
+        <select name="category">
+          <option value="mug">Mug</option>
+          <option value="bowl">Bowl</option>
+          <option value="plate">Plate</option>
+          <option value="wine">Wine Glass</option>
+          <option value="other">Other</option>
+        </select>
+        <input type="file" id="photo-upload" accept="image/*" multiple>
+        <button type="button" class="btn" onclick="uploadPhotos()">Upload Photos</button>
+        <div id="photo-keys"></div>
+        <select name="status">
+          <option value="available">Available</option>
+          <option value="sold">Sold</option>
+        </select>
+        <button type="submit" class="btn btn-pink">Save Item</button>
+      </form>
+    </div>
+
+    <div class="admin-section">
+      <h2>Current Shop Items</h2>
+      <div id="admin-items"></div>
+    </div>
+
+    <div class="admin-section">
+      <h2>Gallery Upload</h2>
+      <form id="gallery-form" class="admin-form">
+        <input name="title" placeholder="Title">
+        <textarea name="caption" placeholder="Caption"></textarea>
+        <input name="collection" placeholder="Collection (mugs, bowls...)">
+        <input type="file" id="gal-photo" accept="image/*">
+        <button type="button" class="btn" onclick="uploadGallery()">Upload & Add</button>
+      </form>
+    </div>
+
+    <div class="admin-section">
+      <h2>Edit Site Text</h2>
+      <form id="settings-form" class="admin-form">
+        <label>Home Intro <textarea name="home_intro" rows="4"></textarea></label>
+        <label>About <textarea name="about_text" rows="4"></textarea></label>
+        <label>Policies <textarea name="policies_text" rows="6"></textarea></label>
+        <label>Custom Info <textarea name="custom_info" rows="3"></textarea></label>
+        <button type="submit" class="btn">Save Texts</button>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    let currentPhotos = [];
+
+    async function uploadPhotos() {
+      const files = document.getElementById('photo-upload').files;
+      currentPhotos = [];
+      for (const file of files) {
+        const fd = new FormData();
+        fd.append('file', file);
+        const res = await fetch('/api/upload', { method: 'POST', body: fd }).then(r => r.json());
+        currentPhotos.push(res.key);
+      }
+      document.getElementById('photo-keys').textContent = 'Uploaded: ' + currentPhotos.join(', ');
+    }
+
+    document.getElementById('item-form').onsubmit = async (e) => {
+      e.preventDefault();
+      const fd = new FormData(e.target);
+      const data = {
+        id: fd.get('id') || undefined,
+        title: fd.get('title'),
+        description: fd.get('description'),
+        price_cents: Math.round(parseFloat(fd.get('price')) * 100),
+        weight_oz: parseFloat(fd.get('weight_oz')) || 16,
+        category: fd.get('category'),
+        photos: currentPhotos,
+        status: fd.get('status')
+      };
+      const method = data.id ? 'PUT' : 'POST';
+      await fetch('/api/items', {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
+      alert('Saved!');
+      loadAdminItems();
+      e.target.reset();
+      currentPhotos = [];
+    };
+
+    async function loadAdminItems() {
+      const items = await fetch('/api/items?status=available').then(r => r.json());
+      const sold = await fetch('/api/items?status=sold').then(r => r.json());
+      const all = [...items, ...sold];
+      document.getElementById('admin-items').innerHTML = all.map(i => `
+        <div style="padding:0.5rem; border-bottom:1px solid #ccc;">
+          ${i.title} - $${i.price} - ${i.status}
+          <button onclick="editItem(${i.id})">Edit</button>
+          <button onclick="markSold(${i.id})">Mark Sold</button>
+          <button onclick="deleteItem(${i.id})">Delete</button>
+        </div>
+      `).join('');
+    }
+
+    async function markSold(id) {
+      const item = (await fetch('/api/items?status=available').then(r => r.json())).find(i => i.id == id);
+      if (item) {
+        await fetch('/api/items', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ...item, status: 'sold' })
+        });
+        loadAdminItems();
+      }
+    }
+
+    async function deleteItem(id) {
+      if (confirm('Delete?')) {
+        await fetch(`/api/items?id=${id}`, { method: 'DELETE' });
+        loadAdminItems();
+      }
+    }
+
+    async function uploadGallery() {
+      const file = document.getElementById('gal-photo').files[0];
+      if (!file) return alert('Select photo');
+      const fd = new FormData();
+      fd.append('file', file);
+      const up = await fetch('/api/upload', { method: 'POST', body: fd }).then(r => r.json());
+      const form = document.getElementById('gallery-form');
+      const data = {
+        title: form.title.value,
+        caption: form.caption.value,
+        collection: form.collection.value,
+        photo_key: up.key
+      };
+      await fetch('/api/gallery', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
+      alert('Gallery item added');
+      form.reset();
+    }
+
+    document.getElementById('settings-form').onsubmit = async (e) => {
+      e.preventDefault();
+      const fd = new FormData(e.target);
+      const data = {};
+      for (const [k, v] of fd.entries()) data[k] = v;
+      await fetch('/api/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
+      alert('Texts saved');
+    };
+
+    async function loadSettings() {
+      const s = await fetch('/api/settings').then(r => r.json());
+      const form = document.getElementById('settings-form');
+      form.home_intro.value = s.home_intro || '';
+      form.about_text.value = s.about_text || '';
+      form.policies_text.value = s.policies_text || '';
+      form.custom_info.value = s.custom_info || '';
+    }
+
+    loadAdminItems();
+    loadSettings();
+  </script>
+</body>
+</html>

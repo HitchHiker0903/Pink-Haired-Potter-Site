@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Custom Orders - Allison Walker Ceramics</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <header>
+    <div class="logo">Allison Walker Ceramics</div>
+    <nav>
+      <a href="/">Home</a>
+      <a href="/gallery.html">Gallery</a>
+      <a href="/shop.html">Shop</a>
+      <a href="/custom.html">Custom Orders</a>
+      <a href="/about.html">About</a>
+      <a href="/cart.html">Cart <span id="cart-count" class="cart-count">0</span></a>
+    </nav>
+  </header>
+  <div class="container">
+    <h1>Request a Custom Piece</h1>
+    <p id="custom-info" style="background:white; padding:1rem; border-radius:15px;"></p>
+    <form id="custom-form" style="background:white; padding:1.5rem; border-radius:15px; margin-top:1rem;" class="admin-form">
+      <label>Piece Type <input name="type" required placeholder="Mug, Bowl, Set, etc."></label>
+      <label>Size <input name="size" placeholder="e.g. 12oz, 8 inch plate"></label>
+      <label>Glaze / Color Preferences <textarea name="color" rows="3"></textarea></label>
+      <label>Quantity <input name="qty" type="number" min="1" value="1"></label>
+      <label>Deadline <input name="deadline" type="date"></label>
+      <label>Budget <input name="budget" placeholder="$"></label>
+      <label>Reference Photo <input type="file" name="photo" accept="image/*"></label>
+      <label>Notes <textarea name="notes" rows="4"></textarea></label>
+      <button type="submit" class="btn btn-pink">Submit Request</button>
+    </form>
+    <p id="form-status"></p>
+  </div>
+  <footer></footer>
+  <script src="/js/main.js"></script>
+  <script>
+    async function loadInfo() {
+      const s = await fetch('/api/settings').then(r => r.json());
+      document.getElementById('custom-info').textContent = s.custom_info || '';
+    }
+    document.getElementById('custom-form').onsubmit = async (e) => {
+      e.preventDefault();
+      const fd = new FormData(e.target);
+      // For photo, we'd upload first then include key; simplified - email via formspree or note to use email
+      alert('Custom order form: In production, wire this to email (e.g. via Cloudflare Email Routing or a form service). For now, please email Allisonwalker311@gmail.com with your details.');
+      // To implement fully: upload photo via /api/upload then POST to a custom function that emails.
+    };
+    loadInfo();
+    updateCartCount();
+  </script>
+</body>
+</html>
