@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Admin | The Pink Haired Potter</title>
+  <link rel="icon" href="/images/favicon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800&family=Nunito:wght@400;700;800&family=Pacifico&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/style.css">
+  <link rel="stylesheet" href="/admin/admin.css">
+  <script src="/admin/admin.js" defer></script>
+</head>
+<body class="admin">
+  <div class="admin-top">
+    <div class="wrap admin-top-row">
+      <a href="/" target="_blank" class="brand"><img src="/images/logo-wordmark.png" alt="The Pink Haired Potter"></a>
+      <div class="hint" id="who">Checking login…</div>
+    </div>
+    <nav class="wrap tabs" id="tabs">
+      <button data-tab="items" class="active">Shop items</button>
+      <button data-tab="gallery">Gallery</button>
+      <button data-tab="orders">Orders</button>
+      <button data-tab="requests">Custom requests</button>
+      <button data-tab="text">Page text</button>
+      <button data-tab="shipping">Shipping</button>
+    </nav>
+  </div>
+
+  <main class="wrap admin-main">
+    <div id="setup-warnings"></div>
+
+    <!-- SHOP ITEMS -->
+    <section data-panel="items">
+      <div class="admin-bar">
+        <h2>Shop items</h2>
+        <button class="btn small" id="new-item">+ New item</button>
+      </div>
+      <div class="chips" id="item-filter">
+        <button class="chip active" data-f="all">All</button>
+        <button class="chip" data-f="available">For sale</button>
+        <button class="chip" data-f="sold">Sold</button>
+        <button class="chip" data-f="hidden">Hidden</button>
+      </div>
+      <div id="item-list" class="admin-list"><div class="loading">Loading…</div></div>
+    </section>
+
+    <!-- GALLERY -->
+    <section data-panel="gallery" class="hidden">
+      <div class="admin-bar">
+        <h2>Gallery</h2>
+      </div>
+      <div class="panel" style="margin-bottom:22px">
+        <h3>Add photos</h3>
+        <div class="form-grid">
+          <div class="field"><label for="g-files">Choose one or more photos</label><input type="file" id="g-files" accept="image/*" multiple></div>
+          <div class="field"><label for="g-collection">Collection <span class="hint">(e.g. Mugs, Bowls)</span></label><input type="text" id="g-collection" list="collections-list"></div>
+        </div>
+        <div class="field"><label for="g-caption">Caption <span class="hint">(optional – used for every photo in this upload)</span></label><input type="text" id="g-caption"></div>
+        <button class="btn small" id="g-upload">Upload to gallery</button>
+        <span class="hint" id="g-progress"></span>
+      </div>
+      <div id="gallery-list" class="gallery-admin"><div class="loading">Loading…</div></div>
+      <datalist id="collections-list"></datalist>
+    </section>
+
+    <!-- ORDERS -->
+    <section data-panel="orders" class="hidden">
+      <div class="admin-bar"><h2>Orders</h2><a class="btn small alt" href="https://dashboard.stripe.com/payments" target="_blank" rel="noopener">Open Stripe</a></div>
+      <div id="order-list" class="admin-list"><div class="loading">Loading…</div></div>
+    </section>
+
+    <!-- CUSTOM REQUESTS -->
+    <section data-panel="requests" class="hidden">
+      <div class="admin-bar"><h2>Custom requests</h2></div>
+      <div id="request-list" class="admin-list"><div class="loading">Loading…</div></div>
+    </section>
+
+    <!-- PAGE TEXT -->
+    <section data-panel="text" class="hidden">
+      <div class="admin-bar"><h2>Page text</h2><button class="btn small" id="save-text">Save all text</button></div>
+      <p class="hint">Leave a blank line between paragraphs. Changes show on the site right after saving (refresh the page).</p>
+      <div id="text-fields"></div>
+      <button class="btn" id="save-text-2">Save all text</button>
+    </section>
+
+    <!-- SHIPPING -->
+    <section data-panel="shipping" class="hidden">
+      <div class="admin-bar"><h2>Shipping</h2><button class="btn small" id="save-ship">Save shipping</button></div>
+      <div class="panel" style="margin-bottom:22px">
+        <h3>Price by packed weight</h3>
+        <p class="hint">Uses the total <strong>packed</strong> weight of the cart (each item’s “packed weight” – include the box and padding). Tip: get a few real quotes from USPS/UPS/Pirate Ship and set these a little above them.</p>
+        <table class="ship-table" id="tier-table"></table>
+        <button class="btn small alt" id="add-tier">+ Add tier</button>
+        <div class="form-grid" style="margin-top:18px">
+          <div class="field"><label for="s-perlb">Over the last tier: add $ per extra lb</label><input type="number" step="0.01" min="0" id="s-perlb"></div>
+          <div class="field"><label for="s-free">Free shipping when subtotal reaches $ <span class="hint">(0 = off)</span></label><input type="number" step="0.01" min="0" id="s-free"></div>
+          <div class="field"><label for="s-far">Far-away ZIP surcharge $ <span class="hint">(0 = off)</span></label><input type="number" step="0.01" min="0" id="s-far"></div>
+          <div class="field"><label for="s-farzip">ZIPs that start with <span class="hint">(comma-separated; 0,1 = Northeast, 9 = West Coast/AK/HI)</span></label><input type="text" id="s-farzip"></div>
+        </div>
+      </div>
+      <div class="panel" style="margin-bottom:22px">
+        <h3>Local pickup</h3>
+        <label class="choice"><input type="checkbox" id="s-pickup"> <span>Offer free local pickup</span></label>
+        <div class="field"><label for="s-city">Pickup city shown to shoppers</label><input type="text" id="s-city"></div>
+        <p class="hint">The street address and pickup instructions are edited in <strong>Page text</strong> and only shown after a pickup order is paid.</p>
+      </div>
+      <div class="panel">
+        <h3>Try it</h3>
+        <div class="form-grid">
+          <div class="field"><label for="t-lbs">Packed weight (lbs)</label><input type="number" step="0.1" id="t-lbs" value="2"></div>
+          <div class="field"><label for="t-zip">ZIP</label><input type="text" id="t-zip" value="90210" maxlength="5"></div>
+        </div>
+        <p id="t-result" style="font-weight:800"></p>
+      </div>
+    </section>
+  </main>
+
+  <!-- Item editor -->
+  <div class="modal" id="item-modal" aria-hidden="true">
+    <form class="modal-card" id="item-form">
+      <div class="admin-bar"><h2 id="item-modal-title">New item</h2><button type="button" class="linkbtn" data-close>Close</button></div>
+      <div class="field">
+        <label>Photos <span class="hint">(first photo is the main one)</span></label>
+        <div class="photo-strip" id="item-photos"></div>
+        <input type="file" id="item-files" accept="image/*" multiple>
+        <span class="hint" id="item-upload-status"></span>
+      </div>
+      <div class="field"><label for="f-title">Title *</label><input type="text" id="f-title" required maxlength="150"></div>
+      <div class="form-grid">
+        <div class="field"><label for="f-price">Price $ *</label><input type="number" id="f-price" step="0.01" min="0.5" required></div>
+        <div class="field"><label for="f-weight">Packed weight (lbs) * <span class="hint">box + padding included</span></label><input type="number" id="f-weight" step="0.1" min="0.1" value="2" required></div>
+        <div class="field"><label for="f-stock">Quantity available</label><input type="number" id="f-stock" min="0" step="1" value="1"></div>
+        <div class="field"><label for="f-category">Category</label><input type="text" id="f-category" list="category-list" placeholder="Mugs"></div>
+      </div>
+      <datalist id="category-list"></datalist>
+      <div class="field"><label for="f-desc">Description <span class="hint">(size, capacity, colors, care notes…)</span></label><textarea id="f-desc"></textarea></div>
+      <label class="choice"><input type="checkbox" id="f-featured"> <span><strong>Feature on the home page</strong></span></label>
+      <label class="choice"><input type="checkbox" id="f-hidden"> <span><strong>Hide from the shop</strong> <span class="hint">(keep it saved but not for sale)</span></span></label>
+      <div id="item-msg"></div>
+      <div class="btn-row" style="justify-content:space-between;margin-top:10px">
+        <div class="btn-row">
+          <button class="btn" type="submit">Save</button>
+          <button class="btn alt" type="button" id="mark-sold">Mark sold</button>
+        </div>
+        <div class="btn-row">
+          <button class="btn alt" type="button" id="to-gallery">Copy photos to gallery</button>
+          <button class="btn alt danger" type="button" id="delete-item">Delete</button>
+        </div>
+      </div>
+    </form>
+  </div>
+  <div class="toast" role="status"></div>
+</body>
+</html>
