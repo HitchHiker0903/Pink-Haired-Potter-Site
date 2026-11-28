@@ -41,7 +41,7 @@ export async function onRequestPost({ env, request }) {
 
   const origin = new URL(request.url).origin;
   const params = new URLSearchParams();
-  params.append('allowed_payment_method_types[]', 'card');
+  params.append('allowed_payment_method_types[0]', 'card');
   params.append('mode', 'payment');
   params.append('success_url', `${origin}/success.html?session_id={CHECKOUT_SESSION_ID}`);
   params.append('cancel_url', `${origin}/shop.html`);
